@@ -139,5 +139,11 @@ namespace UrlShortener.UnitTests
             var ex = Assert.Throws<Exception>(() => _urlShortenerOperation.GetUrlByShortenedUrl(shortUrl));
             Assert.Equal(exceptionMessage, ex.Message);
         }
+
+        [Fact]
+        public void Testing_Jenkins_Unit_Test()
+        {
+            Assert.True(false);
+        }
     }
 }
