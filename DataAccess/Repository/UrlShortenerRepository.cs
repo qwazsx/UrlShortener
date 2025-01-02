@@ -1,72 +1,73 @@
 ﻿using DataAccess.Interface;
 using Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Repository
 {
     public class UrlShortenerRepository : IUrlShortenerRepository
     {
-        private List<UrlInfo> urlInfos;
-        public readonly ApiContext context;
+        private readonly ApiContext _context;
 
-        public UrlShortenerRepository()
+        public UrlShortenerRepository(ApiContext context)
         {
-            //add some default urlInfos
-            urlInfos = new List<UrlInfo>()
-            {
-                new UrlInfo
-                {
-                    RecordId = 1,
-                    InsertDate = DateTime.ParseExact("2022-07-08 13:40", "yyyy-MM-dd HH:mm",System.Globalization.CultureInfo.InvariantCulture),
-                    LongUrl = "https://github.com/qwazsx",
-                    ShortUrl = "GITHB1"
-                },
-                new UrlInfo
-                {
-                    RecordId = 2,
-                    InsertDate = DateTime.ParseExact("2022-07-09 14:40", "yyyy-MM-dd HH:mm",System.Globalization.CultureInfo.InvariantCulture),
-                    LongUrl = "https://www.linkedin.com/in/muhammed-fatih-cambek/",
-                    ShortUrl = "LNKDN2"
-                },
-                new UrlInfo
-                {
-                    RecordId = 3,
-                    InsertDate = DateTime.ParseExact("2022-07-10 15:40", "yyyy-MM-dd HH:mm",System.Globalization.CultureInfo.InvariantCulture),
-                    LongUrl = "https://www.mercedesbenzturk.com.tr/Kariyer/Is-Imkanlari",
-                    ShortUrl = "MRSD3S",
-                    IsShortUrlSpecified = true
-                },
-            };
-            context = new ApiContext();
-            if (context.UrlInfos.Count() == 0)
-            {
-                context.UrlInfos.AddRange(urlInfos);
-            }
-            context.SaveChanges();
-        }
+            _context = context;
 
+            // Add some default urlInfos if the database is empty
+            if (!_context.UrlInfos.Any())
+            {
+                var urlInfos = new List<UrlInfo>
+                {
+                    new UrlInfo
+                    {
+                        RecordId = 1,
+                        InsertDate = DateTime.ParseExact("2022-07-08 13:40", "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+                        LongUrl = "https://github.com/qwazsx",
+                        ShortUrl = "GITHB1"
+                    },
+                    new UrlInfo
+                    {
+                        RecordId = 2,
+                        InsertDate = DateTime.ParseExact("2022-07-09 14:40", "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+                        LongUrl = "https://www.linkedin.com/in/muhammed-fatih-cambek/",
+                        ShortUrl = "LNKDN2"
+                    },
+                    new UrlInfo
+                    {
+                        RecordId = 3,
+                        InsertDate = DateTime.ParseExact("2022-07-10 15:40", "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+                        LongUrl = "https://www.mercedesbenzturk.com.tr/Kariyer/Is-Imkanlari",
+                        ShortUrl = "MRSD3S",
+                        IsShortUrlSpecified = true
+                    }
+                };
+                _context.UrlInfos.AddRange(urlInfos);
+                _context.SaveChanges();
+            }
+        }
 
         public List<UrlInfo> GetUrlInfos()
         {
-            return context.UrlInfos.ToList();
+            return _context.UrlInfos.ToList();
         }
 
         public UrlInfo GetUrlInfoByRecordId(int recordId)
         {
-            return context.UrlInfos?.FirstOrDefault(x => x.RecordId == recordId); //Expected default unique index
+            return _context.UrlInfos.FirstOrDefault(x => x.RecordId == recordId);
         }
 
         public UrlInfo GetUrlInfoByShortUrl(string shortUrl)
         {
-            return context.UrlInfos?.FirstOrDefault(x => x.ShortUrl == shortUrl); //Index for lookups
+            return _context.UrlInfos.FirstOrDefault(x => x.ShortUrl == shortUrl);
         }
 
         public void AddUrlInfo(UrlInfo urlInfo)
         {
-            if (context.UrlInfos.Any(x => x.ShortUrl == urlInfo.ShortUrl)) throw new Exception("Link with given url already registered"); //Db level dupplication prevention mockup
+            if (_context.UrlInfos.Any(x => x.ShortUrl == urlInfo.ShortUrl))
+                throw new Exception("Link with given url already registered");
 
-            if (context.UrlInfos.Any())
+            if (_context.UrlInfos.Any())
             {
-                var maxId = context.UrlInfos.Max(x => x.RecordId);
+                var maxId = _context.UrlInfos.Max(x => x.RecordId);
                 urlInfo.RecordId = maxId + 1;
             }
             else
@@ -74,20 +75,20 @@ namespace DataAccess.Repository
                 urlInfo.RecordId = 1;
             }
             urlInfo.InsertDate = DateTime.Now;
-            context.UrlInfos.AddRange(urlInfo);
-            context.SaveChanges();
+            _context.UrlInfos.Add(urlInfo);
+            _context.SaveChanges();
         }
 
         public void UpdateUrlInfo(UrlInfo urlInfo)
         {
-            var UrlInfoToUpdate = GetUrlInfoByRecordId(urlInfo.RecordId);
-            if (UrlInfoToUpdate != null)
+            var urlInfoToUpdate = GetUrlInfoByRecordId(urlInfo.RecordId);
+            if (urlInfoToUpdate != null)
             {
-                UrlInfoToUpdate.LongUrl = urlInfo.LongUrl;
-                UrlInfoToUpdate.ShortUrl = urlInfo.ShortUrl;
-                context.UpdateRange(UrlInfoToUpdate);
+                urlInfoToUpdate.LongUrl = urlInfo.LongUrl;
+                urlInfoToUpdate.ShortUrl = urlInfo.ShortUrl;
+                _context.Update(urlInfoToUpdate);
+                _context.SaveChanges();
             }
-            context.SaveChanges();
         }
     }
 }

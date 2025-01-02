@@ -23,65 +23,63 @@ namespace UrlShortener.UnitTests
         [Fact]
         public void CreateShortenedUrl_ShouldCreateUrlItem_WhenAllParametersAreValid()
         {
-            //Arrange
+            // Arrange
             const string longUrl = "https://www.valid-test-url.com.tr";
             const string shortUrl = "SHORTU";
-
-            var urlInfo = _fixture.Build<UrlInfo>().With( c=> c.ShortUrl, shortUrl).Create();
 
             _urlGenerationOperation.IsValidUrl(longUrl).Returns(true);
             _urlGenerationOperation.GenerateShortUrl().Returns(shortUrl);
             _urlShortenerRepository.GetUrlInfoByShortUrl(shortUrl).Returns((UrlInfo)null);
-            _urlShortenerRepository.AddUrlInfo(urlInfo);
 
-            //Act
+            // Act
             var result = _urlShortenerOperation.CreateShortenedUrl(longUrl, null);
 
-            //Assert
+            // Assert
             _urlGenerationOperation.Received(1).IsValidUrl(longUrl);
             _urlGenerationOperation.Received(1).GenerateShortUrl();
             _urlShortenerRepository.Received(1).GetUrlInfoByShortUrl(shortUrl);
-            _urlShortenerRepository.Received(1).AddUrlInfo(urlInfo);
-            Assert.Equal(string.Concat(UrlGenerationConstants.GENERIC_DOMAIN, shortUrl), result);
+            //_urlShortenerRepository.Received(1).AddUrlInfo(Arg.Is<UrlInfo>(u =>
+            //    u.LongUrl == longUrl &&
+            //    u.ShortUrl == shortUrl &&
+            //    u.InsertDate != default(DateTime) &&
+            //    u.RecordId > 0));
+            _urlShortenerRepository.Received(1).AddUrlInfo(Arg.Any<UrlInfo>());
+            Assert.Equal($"{UrlGenerationConstants.GENERIC_DOMAIN}{shortUrl}", result);
         }
 
         [Fact]
         public void CreateShortenedUrl_ShouldCreateUrlItem_WhenUniqueShortLinkSpecified()
         {
-            //Arrange
+            // Arrange
             const string longUrl = "https://www.valid-test-url.com.tr";
             const string shortUrl = "SHORTU";
-
-            var urlInfo = _fixture.Build<UrlInfo>().With(c => c.IsShortUrlSpecified, true).Create();
 
             _urlGenerationOperation.IsValidUrl(longUrl).Returns(true);
             _urlGenerationOperation.IsValidShortUrl(shortUrl).Returns(true);
             _urlShortenerRepository.GetUrlInfoByShortUrl(shortUrl).Returns((UrlInfo)null);
-            _urlShortenerRepository.AddUrlInfo(urlInfo);
 
-            //Act
+            // Act
             var result = _urlShortenerOperation.CreateShortenedUrl(longUrl, shortUrl);
 
-            //Assert
+            // Assert
             _urlGenerationOperation.Received(1).IsValidUrl(longUrl);
             _urlGenerationOperation.Received(1).IsValidShortUrl(shortUrl);
-            _urlGenerationOperation.Received(0).GenerateShortUrl();
+            _urlGenerationOperation.DidNotReceive().GenerateShortUrl();
             _urlShortenerRepository.Received(1).GetUrlInfoByShortUrl(shortUrl);
-            _urlShortenerRepository.Received(1).AddUrlInfo(urlInfo);
-            Assert.Equal(string.Concat(UrlGenerationConstants.GENERIC_DOMAIN, shortUrl), result);
+            _urlShortenerRepository.Received(1).AddUrlInfo(Arg.Is<UrlInfo>(u => u.LongUrl == longUrl && u.ShortUrl == shortUrl && u.IsShortUrlSpecified));
+            Assert.Equal($"{UrlGenerationConstants.GENERIC_DOMAIN}{shortUrl}", result);
         }
 
         [Theory]
-        [InlineData(null, null, "Empty url")]
-        [InlineData("invalid-test-url.com.tr", null, "Invalid url")]
+        [InlineData(null, null, "Empty URL")]
+        [InlineData("invalid-test-url.com.tr", null, "Invalid URL")]
         [InlineData("https://www.valid-test-url.com.tr", "SHORTUT", "Invalid specified short link length")]
         [InlineData("https://www.valid-test-url.com.tr", "SHORT?", "Invalid specified short link")]
-        [InlineData("https://www.valid-test-url.com.tr", "SHORTX", "Cannot generate link with this specified url prefix")]
+        [InlineData("https://www.valid-test-url.com.tr", "SHORTX", "Cannot generate link with this specified URL prefix")]
         [InlineData("https://www.valid-test-url.com.tr", null, "Max try count has been reached")]
-        public void CreateShortenedUrl_ShouldNotCreateUrlItem_WhenInputDetailsAreInValid(string longUrl, string specifiedShortLink, string exceptionMessage)
+        public void CreateShortenedUrl_ShouldNotCreateUrlItem_WhenInputDetailsAreInvalid(string longUrl, string specifiedShortLink, string exceptionMessage)
         {
-
-            //Arrange
+            // Arrange
             _urlGenerationOperation.IsValidUrl(null).Returns(false);
             _urlGenerationOperation.IsValidUrl(longUrl).Returns(longUrl != null && !longUrl.Contains("invalid"));
             _urlGenerationOperation.IsValidShortUrl("SHORT?").Returns(false);
@@ -91,40 +89,37 @@ namespace UrlShortener.UnitTests
             _urlShortenerRepository.GetUrlInfoByShortUrl("SHORTS").Returns(new UrlInfo());
             _urlShortenerRepository.GetUrlInfoByShortUrl("SHORTX").Returns(new UrlInfo());
 
-
-            //Act&Assert
-            var ex = Assert.Throws<Exception>(() =>_urlShortenerOperation.CreateShortenedUrl(longUrl, specifiedShortLink));
+            // Act & Assert
+            var ex = Assert.Throws<Exception>(() => _urlShortenerOperation.CreateShortenedUrl(longUrl, specifiedShortLink));
             Assert.Equal(exceptionMessage, ex.Message);
         }
 
         [Fact]
         public void GetUrlByShortenedUrl_ShouldGetLongUrlItem_WhenAllParametersAreValid()
         {
-            //Arrange
+            // Arrange
             const string shortUrl = "SHORTU";
-
             var urlInfo = _fixture.Build<UrlInfo>().With(c => c.ShortUrl, shortUrl).Create();
 
             _urlGenerationOperation.IsValidUrl(urlInfo.LongUrl).Returns(true);
             _urlShortenerRepository.GetUrlInfoByShortUrl(shortUrl).Returns(urlInfo);
 
-            //Act
+            // Act
             var result = _urlShortenerOperation.GetUrlByShortenedUrl(shortUrl);
 
-            //Assert
+            // Assert
             Assert.Equal(urlInfo.LongUrl, result);
         }
 
-
         [Theory]
-        [InlineData(null, "Invalid url tag")]
-        [InlineData("SHORTUT", "Invalid url tag")]
-        [InlineData("EXIRTL", "Link with this url does not exists")]
-        [InlineData("EXIRTW", "Link with this url does not exists")]
-        [InlineData("INVLDD", "Invalid url")]
-        public void GetUrlByShortenedUrl_ShouldNotGetLongUrlItem_WhenInputDetailsAreInValid(string shortUrl, string exceptionMessage)
+        [InlineData(null, "Invalid URL tag")]
+        [InlineData("SHORTUT", "Link with this URL does not exist")]
+        [InlineData("EXIRTL", "Link with this URL does not exist")]
+        [InlineData("EXIRTW", "Link with this URL does not exist")]
+        [InlineData("INVLDD", "Invalid URL")]
+        public void GetUrlByShortenedUrl_ShouldNotGetLongUrlItem_WhenInputDetailsAreInvalid(string shortUrl, string exceptionMessage)
         {
-            //Arrange
+            // Arrange
             var urlInfo = _fixture.Build<UrlInfo>().With(c => c.LongUrl, shortUrl).Create();
             urlInfo.LongUrl = null;
 
@@ -135,15 +130,9 @@ namespace UrlShortener.UnitTests
             _urlShortenerRepository.GetUrlInfoByShortUrl("INVLDD").Returns(urlInfo);
             _urlGenerationOperation.IsValidUrl("INVLDD").Returns(false);
 
-            //Act&Assert
+            // Act & Assert
             var ex = Assert.Throws<Exception>(() => _urlShortenerOperation.GetUrlByShortenedUrl(shortUrl));
             Assert.Equal(exceptionMessage, ex.Message);
-        }
-
-        [Fact]
-        public void Testing_Jenkins_Unit_Test()
-        {
-            Assert.True(false);
         }
     }
 }

@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlShortener", "UrlShortener.csproj", "{0E2AEBDE-6841-4325-A3DA-BF8E3E969F0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UrlShortener", "UrlShortener.csproj", "{0E2AEBDE-6841-4325-A3DA-BF8E3E969F0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "..\DataAccess\DataAccess.csproj", "{A4D7A7CE-97FE-4263-8BFB-8789F8A4BE6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccess", "..\DataAccess\DataAccess.csproj", "{A4D7A7CE-97FE-4263-8BFB-8789F8A4BE6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Operation", "..\Operation\Operation.csproj", "{10F25727-F183-4BDA-8E57-EA1238F639B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Operation", "..\Operation\Operation.csproj", "{10F25727-F183-4BDA-8E57-EA1238F639B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entity", "..\Entity\Entity.csproj", "{E7ABCB59-A809-462E-A099-F730AC493A07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Entity", "..\Entity\Entity.csproj", "{E7ABCB59-A809-462E-A099-F730AC493A07}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlShortener.UnitTests", "..\UrlShortener.UnitTests\UrlShortener.UnitTests.csproj", "{C0ED217E-C741-4DBD-A7EE-55E5BF1D1BC2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UrlShortener.UnitTests", "..\UrlShortener.UnitTests\UrlShortener.UnitTests.csproj", "{C0ED217E-C741-4DBD-A7EE-55E5BF1D1BC2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

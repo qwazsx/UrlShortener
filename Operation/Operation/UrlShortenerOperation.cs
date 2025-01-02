@@ -7,13 +7,13 @@ namespace Operation.Operation
 {
     public class UrlShortenerOperation : IUrlShortenerOperation
     {
-        private readonly IUrlGenerationOperation urlGenerationOperation;
-        private readonly IUrlShortenerRepository urlShortenerRepository;
+        private readonly IUrlGenerationOperation _urlGenerationOperation;
+        private readonly IUrlShortenerRepository _urlShortenerRepository;
 
-        public UrlShortenerOperation(IUrlGenerationOperation urlGenerationOperation,IUrlShortenerRepository urlShortenerRepository)
+        public UrlShortenerOperation(IUrlGenerationOperation urlGenerationOperation, IUrlShortenerRepository urlShortenerRepository)
         {
-            this.urlGenerationOperation = urlGenerationOperation;
-            this.urlShortenerRepository = urlShortenerRepository;
+            _urlGenerationOperation = urlGenerationOperation;
+            _urlShortenerRepository = urlShortenerRepository;
         }
 
         public string CreateShortenedUrl(string url, string specifiedShortLink)
@@ -22,54 +22,45 @@ namespace Operation.Operation
 
             if (!string.IsNullOrWhiteSpace(specifiedShortLink))
             {
-                UrlInfo urlInfo = urlShortenerRepository.GetUrlInfoByShortUrl(specifiedShortLink);
-                if (urlInfo != null)
+                if (_urlShortenerRepository.GetUrlInfoByShortUrl(specifiedShortLink) != null)
                 {
-                    throw new Exception("Cannot generate link with this specified url prefix");
+                    throw new Exception("Cannot generate link with this specified URL prefix");
                 }
-                urlShortenerRepository.AddUrlInfo(new UrlInfo { LongUrl = url, ShortUrl = specifiedShortLink, IsShortUrlSpecified = true });
-                return string.Concat(UrlGenerationConstants.GENERIC_DOMAIN, specifiedShortLink);
+
+                _urlShortenerRepository.AddUrlInfo(new UrlInfo
+                {
+                    LongUrl = url,
+                    ShortUrl = specifiedShortLink,
+                    IsShortUrlSpecified = true
+                });
+
+                return $"{UrlGenerationConstants.GENERIC_DOMAIN}{specifiedShortLink}";
             }
             else
             {
-                int tryCount = 0;
-                string shortenedUrl = string.Empty;
-                do
-                {
-                    shortenedUrl = urlGenerationOperation.GenerateShortUrl();
-                    UrlInfo urlInfo = urlShortenerRepository.GetUrlInfoByShortUrl(shortenedUrl);
-                    if (urlInfo != null)
-                    {
-                        tryCount++;
-                        continue;
-                    }
-
-                    urlShortenerRepository.AddUrlInfo(new UrlInfo { LongUrl = url, ShortUrl = shortenedUrl });
-                    return string.Concat(UrlGenerationConstants.GENERIC_DOMAIN, shortenedUrl);
-                    //I would do in try/catch statement if I were use sql db. And check for (ex is DuplicateKeyException) for trying again
-                    //And for larger scale product I would use range definitions for hashing
-                } while (tryCount < UrlGenerationConstants.HASH_TRY_COUNT);
+                return GenerateAndSaveShortUrl(url);
             }
-            throw new Exception("Max try count has been reached");
         }
 
         public string GetUrlByShortenedUrl(string shortUrl)
         {
-            if (shortUrl == null || shortUrl.Length != UrlGenerationConstants.SHORT_URL_LENGTH)
+            if (string.IsNullOrWhiteSpace(shortUrl))
             {
-                throw new Exception("Invalid url tag");
+                throw new Exception("Invalid URL tag");
             }
 
-            UrlInfo urlInfo = urlShortenerRepository.GetUrlInfoByShortUrl(shortUrl);
+            var urlInfo = _urlShortenerRepository.GetUrlInfoByShortUrl(shortUrl);
 
             if (urlInfo == null || string.IsNullOrWhiteSpace(urlInfo.LongUrl))
             {
-                throw new Exception("Link with this url does not exists");
+                throw new Exception("Link with this URL does not exist");
             }
-            if (!urlGenerationOperation.IsValidUrl(urlInfo.LongUrl))
+
+            if (!_urlGenerationOperation.IsValidUrl(urlInfo.LongUrl))
             {
-                throw new Exception("Invalid url");
+                throw new Exception("Invalid URL");
             }
+
             return urlInfo.LongUrl;
         }
 
@@ -77,21 +68,53 @@ namespace Operation.Operation
         {
             if (string.IsNullOrWhiteSpace(url))
             {
-                throw new Exception("Empty url");
+                throw new Exception("Empty URL");
             }
-            if (!urlGenerationOperation.IsValidUrl(url))
+
+            if (!_urlGenerationOperation.IsValidUrl(url))
             {
-                throw new Exception("Invalid url");
+                throw new Exception("Invalid URL");
             }
-            if (!string.IsNullOrWhiteSpace(specifiedShortLink) && specifiedShortLink.Length != UrlGenerationConstants.SHORT_URL_LENGTH)
+
+            if (!string.IsNullOrWhiteSpace(specifiedShortLink))
             {
-                throw new Exception("Invalid specified short link length");
-            }
-            if (!string.IsNullOrWhiteSpace(specifiedShortLink) && !urlGenerationOperation.IsValidShortUrl(specifiedShortLink))
-            {
-                throw new Exception("Invalid specified short link");
+                if (specifiedShortLink.Length != UrlGenerationConstants.SHORT_URL_LENGTH)
+                {
+                    throw new Exception("Invalid specified short link length");
+                }
+
+                if (!_urlGenerationOperation.IsValidShortUrl(specifiedShortLink))
+                {
+                    throw new Exception("Invalid specified short link");
+                }
             }
         }
 
+        private string GenerateAndSaveShortUrl(string url)
+        {
+            int tryCount = 0;
+            string shortenedUrl;
+
+            do
+            {
+                shortenedUrl = _urlGenerationOperation.GenerateShortUrl();
+
+                if (_urlShortenerRepository.GetUrlInfoByShortUrl(shortenedUrl) != null)
+                {
+                    tryCount++;
+                    continue;
+                }
+
+                _urlShortenerRepository.AddUrlInfo(new UrlInfo
+                {
+                    LongUrl = url,
+                    ShortUrl = shortenedUrl
+                });
+
+                return $"{UrlGenerationConstants.GENERIC_DOMAIN}{shortenedUrl}";
+            } while (tryCount < UrlGenerationConstants.HASH_TRY_COUNT);
+
+            throw new Exception("Max try count has been reached");
+        }
     }
 }
